@@ -66,3 +66,182 @@ public:
     int GetDamage() const { return damage; }
     int GetMana() const { return mana; }
 };
+
+//создание подкласса маг, новый персонаж который использует свои спсобности 
+class Mage : public Character {
+private:
+
+    bool shieldActive = false;
+    bool poisonActive = false;
+
+public:
+
+    Mage(string name)
+        : Character(name, "Fire", 80, 15, 120)
+    {}
+
+    // Обычная атака
+    void Attack(Character& target) override {
+
+        cout << name
+             << " атакует магическим зарядом!\n";
+
+        target.TakeDamage(damage);
+    }
+
+    // Fireball
+    void Fireball(Character& target) {
+
+        if (mana >= 30) {
+
+            mana -= 30;
+
+            cout << name
+                 << " использует Fireball!\n";
+
+            target.TakeDamage(damage + 35);
+
+            cout << "Мана: "
+                 << mana
+                 << "/"
+                 << maxMana
+                 << endl;
+        }
+        else {
+
+            cout << "Недостаточно маны!\n";
+        }
+    }
+
+    // Отравление
+    void Poison(Character& target) {
+
+        if (mana >= 25) {
+
+            mana -= 25;
+
+            poisonActive = true;
+
+            cout << name
+                 << " накладывает отравление на "
+                 << target.GetName()
+                 << endl;
+
+            target.TakeDamage(10);
+
+            cout << target.GetName()
+                 << " получает периодический урон!\n";
+
+            cout << "Мана: "
+                 << mana
+                 << "/"
+                 << maxMana
+                 << endl;
+        }
+        else {
+
+            cout << "Недостаточно маны!\n";
+        }
+    }
+
+    // Магический щит
+    void Shield() {
+
+        if (mana >= 20) {
+
+            mana -= 20;
+
+            shieldActive = true;
+
+            cout << name
+                 << " использует магический щит!\n";
+
+            cout << "Следующий входящий урон будет уменьшен.\n";
+
+            cout << "Мана: "
+                 << mana
+                 << "/"
+                 << maxMana
+                 << endl;
+        }
+        else {
+
+            cout << "Недостаточно маны!\n";
+        }
+    }
+
+    // Быстрое лечение
+    void FastHeal() {
+
+        if (mana >= 35) {
+
+            mana -= 35;
+
+            int healAmount = 40;
+
+            Heal(healAmount);
+
+            cout << name
+                 << " быстро восстанавливает здоровье!\n";
+
+            cout << "Мана: "
+                 << mana
+                 << "/"
+                 << maxMana
+                 << endl;
+        }
+        else {
+
+            cout << "Недостаточно маны!\n";
+        }
+    }
+
+    // Проверка щита
+    void TakeDamageWithShield(int amount) {
+
+        if (shieldActive) {
+
+            amount /= 2;
+
+            cout << "Щит уменьшает урон!\n";
+
+            shieldActive = false;
+        }
+
+        TakeDamage(amount);
+    }
+
+    // Характеристики
+    void ShowStats() override {
+
+        cout << "\n===== MAGE =====\n";
+
+        cout << "Имя: "
+             << name
+             << endl;
+
+        cout << "Стихия: "
+             << element
+             << endl;
+
+        cout << "HP: "
+             << health
+             << "/"
+             << maxHealth
+             << endl;
+
+        cout << "Mana: "
+             << mana
+             << "/"
+             << maxMana
+             << endl;
+
+        cout << "Damage: "
+             << damage
+             << endl;
+
+        cout << "Shield: "
+             << (shieldActive ? "Active" : "Inactive")
+             << endl;
+    }
+};
