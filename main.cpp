@@ -1,4 +1,9 @@
 #include <iostream>
+#include <vector>
+#include <string>
+#include <ctime>
+#include <cstdlib>
+
 using namespace std;
 
 int main() {
@@ -244,4 +249,95 @@ public:
              << (shieldActive ? "Active" : "Inactive")
              << endl;
     }
+
+class Warrior : public Character {
+private:
+    int rage;
+    int maxRage;
+    bool shieldActive;
+    int damageBonus;
+
+public:
+    Warrior(string name)
+        : Character(name, "Earth", 180, 15, 0)  // Нет маны, много здоровья
+    {
+        rage = 0;
+        maxRage = 100;
+        shieldActive = false;
+        damageBonus = 0;
+    }
+
+    // Обычная атака
+    void Attack(Character& target) override {
+        cout << name << " наносит удар мечом!" << endl;
+        
+        int totalDamage = damage + damageBonus;
+        target.TakeDamage(totalDamage);
+        
+        rage += 15;
+        if (rage > maxRage) rage = maxRage;
+        
+        cout << "Ярость: " << rage << "/" << maxRage << endl;
+    }
+
+    // Тяжелый удар мечом
+    void HeavyStrike(Character& target) {
+        if (rage >= 40) {
+            rage -= 40;
+            cout << name << " использует ТЯЖЕЛЫЙ УДАР МЕЧОМ!" << endl;
+            target.TakeDamage(damage + 25 + damageBonus);
+            cout << "Ярость: " << rage << "/" << maxRage << endl;
+        }
+        else {
+            cout << "Недостаточно ярости! Нужно 40" << endl;
+        }
+    }
+
+    // Укрытие за щитом
+    void Shield() {
+        if (rage >= 20) {
+            rage -= 20;
+            shieldActive = true;
+            cout << name << " укрывается за щитом!" << endl;
+            cout << "Следующий урон будет снижен на 35%" << endl;
+            cout << "Ярость: " << rage << "/" << maxRage << endl;
+        }
+        else {
+            cout << "Недостаточно ярости! Нужно 20" << endl;
+        }
+    }
+
+    // Получение урона со щитом
+    void TakeDamageWithShield(int amount) {
+        if (shieldActive) {
+            amount = amount * 0.65;
+            cout << "Щит снижает урон!" << endl;
+            shieldActive = false;
+        }
+        
+        int oldHealth = health;
+        TakeDamage(amount);
+        
+        // Пассивная способность: за каждые 15 потерянного HP +3 к урону
+        int healthLost = oldHealth - health;
+        if (healthLost > 0) {
+            int bonus = (healthLost / 15) * 3;
+            damageBonus += bonus;
+            if (bonus > 0) {
+                cout << "Ярость берсерка! Урон увеличен на " << bonus << endl;
+            }
+        }
+    }
+
+    // Показать характеристики
+    void ShowStats() override {
+        cout << "\n===== WARRIOR =====" << endl;
+        cout << "Имя: " << name << endl;
+        cout << "Стихия: " << element << endl;
+        cout << "HP: " << health << "/" << maxHealth << endl;
+        cout << "Ярость: " << rage << "/" << maxRage << endl;
+        cout << "Урон: " << damage << " +" << damageBonus << endl;
+        cout << "Щит: " << (shieldActive ? "Активен" : "Не активен") << endl;
+    }
+};
 };
