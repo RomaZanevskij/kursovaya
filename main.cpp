@@ -344,3 +344,111 @@ public:
     }
 };
 };
+class Ninja : public Character {
+private:
+    bool invisible = false;    // Невидимость активна
+    bool smokeActive = false;   // Дым активен
+
+public:
+    Ninja(string name)
+        : Character(name, "Wind", 85, 18, 110)  // HP 85, урон 18, макс мана 110
+    {}
+
+    // Обычная атака
+    void Attack(Character& target) override {
+        int bonus = 0;
+        
+        if (invisible) {
+            bonus = 20;
+            cout << "(Невидимость увеличивает урон!)\n";
+            invisible = false;  // После атаки невидимость пропадает
+        }
+        
+        cout << name << " атакует из теней!\n";
+        target.TakeDamage(damage + bonus);
+    }
+
+    // Скрытный удар (уходит в невидимость)
+    void StealthStrike() {
+        if (mana >= 30) {
+            mana -= 30;
+            invisible = true;
+            
+            cout << name << " использует Скрытный удар и становится невидимым!\n";
+            cout << "Следующая атака нанесёт дополнительный урон.\n";
+            cout << "Мана: " << mana << "/" << maxMana << endl;
+        }
+        else {
+            cout << "Недостаточно маны!\n";
+        }
+    }
+
+    // Дымовая завеса (увеличивает ловкость/урон на время)
+    void SmokeScreen() {
+        if (mana >= 25) {
+            mana -= 25;
+            smokeActive = true;
+            
+            cout << name << " создаёт дымовую завесу!\n";
+            cout << "Ловкость увеличена! +15 к урону на 3 хода.\n";
+            cout << "Мана: " << mana << "/" << maxMana << endl;
+        }
+        else {
+            cout << "Недостаточно маны!\n";
+        }
+    }
+
+    // Сюрикены (быстрая атака)
+    void Shuriken(Character& target) {
+        if (mana >= 20) {
+            mana -= 20;
+            
+            cout << name << " бросает сюрикены!\n";
+            target.TakeDamage(damage + 10);
+            
+            cout << "Мана: " << mana << "/" << maxMana << endl;
+        }
+        else {
+            cout << "Недостаточно маны!\n";
+        }
+    }
+
+    // Быстрое восстановление
+    void FastHeal() {
+        if (mana >= 35) {
+            mana -= 35;
+            
+            int healAmount = 40;
+            Heal(healAmount);
+            
+            cout << name << " быстро восстанавливает здоровье!\n";
+            cout << "Мана: " << mana << "/" << maxMana << endl;
+        }
+        else {
+            cout << "Недостаточно маны!\n";
+        }
+    }
+
+    // Получение урона с учётом дыма
+    void TakeDamageWithSmoke(int amount) {
+        if (smokeActive) {
+            amount = amount / 2;
+            cout << "Дымовая завеса уменьшает урон вдвое!\n";
+            smokeActive = false;  // Дым рассеивается после одного удара
+        }
+        
+        TakeDamage(amount);
+    }
+
+    // Характеристики
+    void ShowStats() override {
+        cout << "\n===== NINJA =====\n";
+        cout << "Имя: " << name << endl;
+        cout << "Стихия: " << element << endl;
+        cout << "HP: " << health << "/" << maxHealth << endl;
+        cout << "Мана: " << mana << "/" << maxMana << endl;
+        cout << "Урон: " << damage << endl;
+        cout << "Невидимость: " << (invisible ? "Активна" : "Не активна") << endl;
+        cout << "Дым: " << (smokeActive ? "Активен" : "Не активен") << endl;
+    }
+};
