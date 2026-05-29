@@ -8,6 +8,7 @@ using namespace std;
 class Character;
 class Mage;
 class Warrior;
+class Ninja;
 
 int main() {
 	setlocale(LC_ALL, "RU");
