@@ -454,3 +454,110 @@ public:
         cout << "Дым: " << (smokeActive ? "Активен" : "Не активен") << endl;
     }
 };
+class Skeleton : public Character {
+private:
+    time_t lastDamageTime;      // Время последнего получения урона
+    bool isBlockingNextHit;     // Блокирует ли следующий удар
+    bool hasBlocked;            // Был ли уже заблокирован удар в текущей атаке
+
+public:
+    Skeleton(string name) 
+        : Character(name, "Darkness", 120, 15, 0) {  // HP 120, урон 15, маны нет
+        lastDamageTime = time(nullptr);
+        isBlockingNextHit = false;
+        hasBlocked = false;
+    }
+
+    // Пассивка 1: Регенерация здоровья если нет урона 5 секунд
+    void RegenerateHealth() {
+        time_t currentTime = time(nullptr);
+        double secondsPassed = difftime(currentTime, lastDamageTime);
+        
+        if (secondsPassed >= 5.0) {
+            int healAmount = 20;  // Восстанавливает 20 HP
+            if (secondsPassed >= 10.0) {
+                healAmount = 40;  // Если прошло больше 10 секунд, восстанавливает 40 HP
+            }
+            
+            if (health < maxHealth) {
+                health = min(health + healAmount, maxHealth);
+                cout << "⚰️ " << name << " не получал урона " << (int)secondsPassed 
+                     << " сек! Пассивная регенерация: +" << healAmount << " HP! ⚰️\n";
+                cout << "❤️ Здоровье: " << health << "/" << maxHealth << " ❤️\n";
+            }
+            
+            // Обновляем время проверки, чтобы не спамить регеном каждый тик
+            lastDamageTime = currentTime;
+        }
+    }
+
+    // Переопределяем получение урона для отслеживания времени
+    void TakeDamage(int amount) override {
+        // Обновляем время последнего урона
+        lastDamageTime = time(nullptr);
+        
+        // Вызываем обычное получение урона
+        Character::TakeDamage(amount);
+    }
+
+    // Пассивка 2: Урон наносится только со второго удара
+    void BlockNextHit() {
+        if (!hasBlocked) {
+            isBlockingNextHit = true;
+        }
+    }
+    
+    // Атака с пассивкой "урон только со второго удара"
+    void Attack(Character& target) override {
+        cout << "💀 " << name << " атакует! 💀\n";
+        
+        if (!hasBlocked) {
+            cout << "🛡️ Пассивная способность! Первый удар заблокирован! 🛡️\n";
+            cout << name << " готовится к следующей атаке...\n";
+            hasBlocked = true;
+            // Не наносим урон при первом ударе
+            return;
+        }
+        
+        // Второй удар наносит урон
+        cout << "⚔️ " << name << " наносит урон со второго удара! ⚔️\n";
+        target.TakeDamage(damage);
+        
+        // Сбрасываем флаг после успешной атаки
+        hasBlocked = false;
+    }
+    
+    // Специальная атака для сброса пассивки (если враг пропустил ход)
+    void ResetBlockPassive() {
+        hasBlocked = false;
+        cout << "🔄 Пассивка сброшена! Следующая атака снова будет заблокирована.\n";
+    }
+    
+    // Метод для обновления состояния (вызывать каждый ход)
+    void Update() {
+        RegenerateHealth();  // Проверяем регенерацию
+        BlockNextHit();      // Обновляем статус блока
+    }
+    
+    // Переопределяем метод для отображения характеристик
+    void ShowStats() override {
+        cout << "\n===== SKELETON =====" << endl;
+        cout << "Имя: " << name << endl;
+        cout << "Стихия: " << element << endl;
+        cout << "❤️ HP: " << health << "/" << maxHealth << " ❤️" << endl;
+        cout << "⚔️ Урон: " << damage << " ⚔️" << endl;
+        
+        time_t currentTime = time(nullptr);
+        double secondsSinceLastDamage = difftime(currentTime, lastDamageTime);
+        
+        cout << "⏱️ Время без урона: " << (int)secondsSinceLastDamage << " сек" << endl;
+        if (secondsSinceLastDamage >= 5.0) {
+            cout << "🔄 Регенерация активна! 🔄" << endl;
+        } else {
+            cout << "❌ Регенерация не активна ❌" << endl;
+        }
+        
+        cout << "🛡️ Статус блока: " << (hasBlocked ? "Первый удар заблокирован" : "Готов наносить урон") << endl;
+        cout << "===================\n";
+    }
+};
