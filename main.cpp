@@ -39,7 +39,7 @@ public:
 
     virtual ~Character() {}
 
-    void TakeDamage(int amount) {
+    virtual void TakeDamage(int amount) {
         health -= amount;
         cout << name << " получил " << amount << " урона" << endl;
         if (health <= 0) {
@@ -205,7 +205,7 @@ public:
     }
 
     // Проверка щита
-    void TakeDamageWithShield(int amount) {
+    void TakeDamage(int amount) override {
 
         if (shieldActive) {
 
@@ -252,6 +252,7 @@ public:
              << (shieldActive ? "Active" : "Inactive")
              << endl;
     }
+};
 
 class Warrior : public Character {
 private:
@@ -311,7 +312,7 @@ public:
     }
 
     // Получение урона со щитом
-    void TakeDamageWithShield(int amount) {
+    void TakeDamage(int amount) override {
         if (shieldActive) {
             amount = amount * 0.65;
             cout << "Щит снижает урон!" << endl;
@@ -343,7 +344,7 @@ public:
         cout << "Щит: " << (shieldActive ? "Активен" : "Не активен") << endl;
     }
 };
-};
+
 class Ninja : public Character {
 private:
     bool invisible = false;    // Невидимость активна
@@ -430,7 +431,7 @@ public:
     }
 
     // Получение урона с учётом дыма
-    void TakeDamageWithSmoke(int amount) {
+    void TakeDamage (int amount) override {
         if (smokeActive) {
             amount = amount / 2;
             cout << "Дымовая завеса уменьшает урон вдвое!\n";
