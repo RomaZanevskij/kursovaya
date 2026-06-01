@@ -1,28 +1,17 @@
 #include <iostream>
-#include <vector>
 #include <string>
 #include <ctime>
 #include <cstdlib>
 
 using namespace std;
-class Character;
-class Mage;
-class Warrior;
-class Ninja;
-
-int main() {
-	setlocale(LC_ALL, "RU");
-
-	return 0;
-}
 
 class Character {
 protected:
-  string name;
+    string name;
     string element;
     int damage;
-  int health;
-  int maxHealth;
+    int health;
+    int maxHealth;
     int mana;
     int maxMana;
     bool isAlive;
@@ -68,7 +57,7 @@ public:
     }
 
     string GetName() const { return name; }
-    string GetElement() const{ return element; }
+    string GetElement() const { return element; }
     int GetHealth() const { return health; }
     int GetMaxHealth() const { return maxHealth; }
     bool GetIsAlive() const { return isAlive; }
@@ -79,21 +68,22 @@ public:
 //создание подкласса маг, новый персонаж который использует свои спсобности 
 class Mage : public Character {
 private:
-
     bool shieldActive = false;
     bool poisonActive = false;
-
+    int poisonTurnsLeft = 0;
+    Character* poisonedTarget = nullptr;
 public:
 
     Mage(string name)
         : Character(name, "Fire", 80, 15, 120)
-    {}
+    {
+    }
 
     // Обычная атака
     void Attack(Character& target) override {
 
         cout << name
-             << " атакует магическим зарядом!\n";
+            << " атакует магическим зарядом!\n";
 
         target.TakeDamage(damage);
     }
@@ -106,15 +96,15 @@ public:
             mana -= 30;
 
             cout << name
-                 << " использует Fireball!\n";
+                << " использует Fireball!\n";
 
             target.TakeDamage(damage + 35);
 
             cout << "Мана: "
-                 << mana
-                 << "/"
-                 << maxMana
-                 << endl;
+                << mana
+                << "/"
+                << maxMana
+                << endl;
         }
         else {
 
@@ -130,22 +120,24 @@ public:
             mana -= 25;
 
             poisonActive = true;
+            poisonTurnsLeft = 3;
+            poisonedTarget = &target;
 
             cout << name
-                 << " накладывает отравление на "
-                 << target.GetName()
-                 << endl;
+                << " накладывает отравление на "
+                << target.GetName()
+                << endl;
 
             target.TakeDamage(10);
 
             cout << target.GetName()
-                 << " получает периодический урон!\n";
+                << " получает периодический урон в течение 3 ходов!\n";
 
             cout << "Мана: "
-                 << mana
-                 << "/"
-                 << maxMana
-                 << endl;
+                << mana
+                << "/"
+                << maxMana
+                << endl;
         }
         else {
 
@@ -163,15 +155,15 @@ public:
             shieldActive = true;
 
             cout << name
-                 << " использует магический щит!\n";
+                << " использует магический щит!\n";
 
             cout << "Следующий входящий урон будет уменьшен.\n";
 
             cout << "Мана: "
-                 << mana
-                 << "/"
-                 << maxMana
-                 << endl;
+                << mana
+                << "/"
+                << maxMana
+                << endl;
         }
         else {
 
@@ -191,13 +183,13 @@ public:
             Heal(healAmount);
 
             cout << name
-                 << " быстро восстанавливает здоровье!\n";
+                << " быстро восстанавливает здоровье!\n";
 
             cout << "Мана: "
-                 << mana
-                 << "/"
-                 << maxMana
-                 << endl;
+                << mana
+                << "/"
+                << maxMana
+                << endl;
         }
         else {
 
@@ -207,17 +199,28 @@ public:
 
     // Проверка щита
     void TakeDamage(int amount) override {
-
         if (shieldActive) {
-
             amount /= 2;
-
             cout << "Щит уменьшает урон!\n";
-
             shieldActive = false;
         }
+        Character::TakeDamage(amount);
+    }
 
-        TakeDamage(amount);
+    // Периодический урон от отравления
+    void ApplyPoisonDamage() {
+        if (poisonActive && poisonedTarget != nullptr && poisonTurnsLeft > 0) {
+            if (poisonedTarget->GetIsAlive()) {
+                cout << "Яд " << name << " наносит урон " << poisonedTarget->GetName() << "!\n";
+                poisonedTarget->TakeDamage(10);
+            }
+            poisonTurnsLeft--;
+            if (poisonTurnsLeft <= 0) {
+                poisonActive = false;
+                poisonedTarget = nullptr;
+                cout << "Действие отравления закончилось.\n";
+            }
+        }
     }
 
     // Характеристики
@@ -226,33 +229,38 @@ public:
         cout << "\n===== MAGE =====\n";
 
         cout << "Имя: "
-             << name
-             << endl;
+            << name
+            << endl;
 
         cout << "Стихия: "
-             << element
-             << endl;
+            << element
+            << endl;
 
         cout << "HP: "
-             << health
-             << "/"
-             << maxHealth
-             << endl;
+            << health
+            << "/"
+            << maxHealth
+            << endl;
 
         cout << "Mana: "
-             << mana
-             << "/"
-             << maxMana
-             << endl;
+            << mana
+            << "/"
+            << maxMana
+            << endl;
 
         cout << "Damage: "
-             << damage
-             << endl;
+            << damage
+            << endl;
 
         cout << "Shield: "
-             << (shieldActive ? "Active" : "Inactive")
-             << endl;
+            << (shieldActive ? "Active" : "Inactive")
+            << endl;
+
+        cout << "Poison: "
+            << (poisonActive ? "Active (" + to_string(poisonTurnsLeft) + " turns left)" : "Inactive")
+            << endl;
     }
+    void ResetShield() { shieldActive = false; }
 };
 
 class Warrior : public Character {
@@ -275,13 +283,13 @@ public:
     // Обычная атака
     void Attack(Character& target) override {
         cout << name << " наносит удар мечом!" << endl;
-        
+
         int totalDamage = damage + damageBonus;
         target.TakeDamage(totalDamage);
-        
+
         rage += 15;
         if (rage > maxRage) rage = maxRage;
-        
+
         cout << "Ярость: " << rage << "/" << maxRage << endl;
     }
 
@@ -319,10 +327,10 @@ public:
             cout << "Щит снижает урон!" << endl;
             shieldActive = false;
         }
-        
+
         int oldHealth = health;
-        TakeDamage(amount);
-        
+        Character::TakeDamage(amount);
+
         // Пассивная способность: за каждые 15 потерянного HP +3 к урону
         int healthLost = oldHealth - health;
         if (healthLost > 0) {
@@ -344,30 +352,50 @@ public:
         cout << "Урон: " << damage << " +" << damageBonus << endl;
         cout << "Щит: " << (shieldActive ? "Активен" : "Не активен") << endl;
     }
+    int GetRage() { return rage; }
+    void ResetShield() { shieldActive = false; }
 };
 
 class Ninja : public Character {
 private:
     bool invisible = false;    // Невидимость активна
     bool smokeActive = false;   // Дым активен
+    int smokeTurnsLeft = 0;     // Сколько ходов осталось действовать дыму
+    int smokeDamageBonus = 0;   // Бонус к урону от дыма
 
 public:
     Ninja(string name)
         : Character(name, "Wind", 85, 18, 110)  // HP 85, урон 18, макс мана 110
-    {}
+    {
+    }
 
     // Обычная атака
     void Attack(Character& target) override {
         int bonus = 0;
-        
+
         if (invisible) {
-            bonus = 20;
+            bonus += 20;
             cout << "(Невидимость увеличивает урон!)\n";
             invisible = false;  // После атаки невидимость пропадает
         }
-        
+
+        if (smokeActive && smokeTurnsLeft > 0) {
+            bonus += smokeDamageBonus;
+            cout << "(Дымовая завеса увеличивает урон на " << smokeDamageBonus << "!)\n";
+        }
+
         cout << name << " атакует из теней!\n";
         target.TakeDamage(damage + bonus);
+
+        // Уменьшаем счётчик ходов дыма после атаки
+        if (smokeActive) {
+            smokeTurnsLeft--;
+            if (smokeTurnsLeft <= 0) {
+                smokeActive = false;
+                smokeDamageBonus = 0;
+                cout << "Дымовая завеса рассеялась.\n";
+            }
+        }
     }
 
     // Скрытный удар (уходит в невидимость)
@@ -375,7 +403,7 @@ public:
         if (mana >= 30) {
             mana -= 30;
             invisible = true;
-            
+
             cout << name << " использует Скрытный удар и становится невидимым!\n";
             cout << "Следующая атака нанесёт дополнительный урон.\n";
             cout << "Мана: " << mana << "/" << maxMana << endl;
@@ -390,7 +418,9 @@ public:
         if (mana >= 25) {
             mana -= 25;
             smokeActive = true;
-            
+            smokeTurnsLeft = 3;
+            smokeDamageBonus = 15;
+
             cout << name << " создаёт дымовую завесу!\n";
             cout << "Ловкость увеличена! +15 к урону на 3 хода.\n";
             cout << "Мана: " << mana << "/" << maxMana << endl;
@@ -404,10 +434,10 @@ public:
     void Shuriken(Character& target) {
         if (mana >= 20) {
             mana -= 20;
-            
+
             cout << name << " бросает сюрикены!\n";
             target.TakeDamage(damage + 10);
-            
+
             cout << "Мана: " << mana << "/" << maxMana << endl;
         }
         else {
@@ -419,10 +449,10 @@ public:
     void FastHeal() {
         if (mana >= 35) {
             mana -= 35;
-            
+
             int healAmount = 40;
             Heal(healAmount);
-            
+
             cout << name << " быстро восстанавливает здоровье!\n";
             cout << "Мана: " << mana << "/" << maxMana << endl;
         }
@@ -432,14 +462,16 @@ public:
     }
 
     // Получение урона с учётом дыма
-    void TakeDamage (int amount) override {
+    void TakeDamage(int amount) override {
         if (smokeActive) {
             amount = amount / 2;
             cout << "Дымовая завеса уменьшает урон вдвое!\n";
-            smokeActive = false;  // Дым рассеивается после одного удара
+            smokeActive = false;
+            smokeTurnsLeft = 0;
+            smokeDamageBonus = 0;
         }
-        
-        TakeDamage(amount);
+
+        Character::TakeDamage(amount);
     }
 
     // Характеристики
@@ -451,113 +483,240 @@ public:
         cout << "Мана: " << mana << "/" << maxMana << endl;
         cout << "Урон: " << damage << endl;
         cout << "Невидимость: " << (invisible ? "Активна" : "Не активна") << endl;
-        cout << "Дым: " << (smokeActive ? "Активен" : "Не активен") << endl;
+        cout << "Дым: " << (smokeActive ? "Активен (осталось ходов: " + to_string(smokeTurnsLeft) + ", бонус +" + to_string(smokeDamageBonus) + ")" : "Не активен") << endl;
     }
+    void ResetInvisible() { invisible = false; }
 };
+
 class Skeleton : public Character {
 private:
-    time_t lastDamageTime;      // Время последнего получения урона
-    bool isBlockingNextHit;     // Блокирует ли следующий удар
-    bool hasBlocked;            // Был ли уже заблокирован удар в текущей атаке
+    int turnsWithoutDamage;     // Количество ходов без получения урона
+    bool hasBlocked;            // Был ли уже заблокирован первый удар
 
 public:
-    Skeleton(string name) 
-        : Character(name, "Darkness", 120, 15, 0) {  // HP 120, урон 15, маны нет
-        lastDamageTime = time(nullptr);
-        isBlockingNextHit = false;
+    Skeleton(string name)
+        : Character(name, "Darkness", 120, 15, 0) {
+        turnsWithoutDamage = 0;
         hasBlocked = false;
     }
 
-    // Пассивка 1: Регенерация здоровья если нет урона 5 секунд
+    // Пассивка 1: Регенерация здоровья если нет урона 2 хода
     void RegenerateHealth() {
-        time_t currentTime = time(nullptr);
-        double secondsPassed = difftime(currentTime, lastDamageTime);
-        
-        if (secondsPassed >= 5.0) {
-            int healAmount = 20;  // Восстанавливает 20 HP
-            if (secondsPassed >= 10.0) {
-                healAmount = 40;  // Если прошло больше 10 секунд, восстанавливает 40 HP
+        if (turnsWithoutDamage >= 2 && health < maxHealth) {
+            int healAmount = 20;
+            if (turnsWithoutDamage >= 4) {
+                healAmount = 40;  // Если нет урона 4+ хода, восстанавливает 40 HP
             }
-            
-            if (health < maxHealth) {
-                health = min(health + healAmount, maxHealth);
-                cout << "⚰️ " << name << " не получал урона " << (int)secondsPassed 
-                     << " сек! Пассивная регенерация: +" << healAmount << " HP! ⚰️\n";
-                cout << "❤️ Здоровье: " << health << "/" << maxHealth << " ❤️\n";
+
+            int newHealth = health + healAmount;
+            if (newHealth > maxHealth) {
+                health = maxHealth;
             }
-            
-            // Обновляем время проверки, чтобы не спамить регеном каждый тик
-            lastDamageTime = currentTime;
+            else {
+                health = newHealth;
+            }
+            cout << name << " не получал урона " << turnsWithoutDamage
+                << " хода! Пассивная регенерация: +" << healAmount << " HP!\n";
+            cout << "Здоровье: " << health << "/" << maxHealth << "\n";
         }
     }
 
-    // Переопределяем получение урона для отслеживания времени
+    // Переопределяем получение урона для отслеживания ходов
     void TakeDamage(int amount) override {
-        // Обновляем время последнего урона
-        lastDamageTime = time(nullptr);
-        
+        // Сбрасываем счётчик ходов без урона
+        turnsWithoutDamage = 0;
+        // Сбрасываем блокировку при получении урона
+        hasBlocked = false;
+
         // Вызываем обычное получение урона
         Character::TakeDamage(amount);
     }
 
-    // Пассивка 2: Урон наносится только со второго удара
-    void BlockNextHit() {
-        if (!hasBlocked) {
-            isBlockingNextHit = true;
-        }
-    }
-    
     // Атака с пассивкой "урон только со второго удара"
     void Attack(Character& target) override {
-        cout << "💀 " << name << " атакует! 💀\n";
-        
+        cout << name << " атакует!\n";
+
         if (!hasBlocked) {
-            cout << "🛡️ Пассивная способность! Первый удар заблокирован! 🛡️\n";
+            cout << "Пассивная способность! Первый удар заблокирован!\n";
             cout << name << " готовится к следующей атаке...\n";
             hasBlocked = true;
             // Не наносим урон при первом ударе
             return;
         }
-        
+
         // Второй удар наносит урон
-        cout << "⚔️ " << name << " наносит урон со второго удара! ⚔️\n";
+        cout << name << " наносит урон со второго удара!\n";
         target.TakeDamage(damage);
-        
+
         // Сбрасываем флаг после успешной атаки
         hasBlocked = false;
     }
-    
-    // Специальная атака для сброса пассивки (если враг пропустил ход)
-    void ResetBlockPassive() {
-        hasBlocked = false;
-        cout << "🔄 Пассивка сброшена! Следующая атака снова будет заблокирована.\n";
-    }
-    
+
     // Метод для обновления состояния (вызывать каждый ход)
-    void Update() {
-        RegenerateHealth();  // Проверяем регенерацию
-        BlockNextHit();      // Обновляем статус блока
+    void EndOfTurn() {
+        turnsWithoutDamage++;     // Увеличиваем счётчик ходов без урона
+        RegenerateHealth();       // Проверяем регенерацию
     }
-    
+
     // Переопределяем метод для отображения характеристик
     void ShowStats() override {
         cout << "\n===== SKELETON =====" << endl;
         cout << "Имя: " << name << endl;
         cout << "Стихия: " << element << endl;
-        cout << "❤️ HP: " << health << "/" << maxHealth << " ❤️" << endl;
-        cout << "⚔️ Урон: " << damage << " ⚔️" << endl;
-        
-        time_t currentTime = time(nullptr);
-        double secondsSinceLastDamage = difftime(currentTime, lastDamageTime);
-        
-        cout << "⏱️ Время без урона: " << (int)secondsSinceLastDamage << " сек" << endl;
-        if (secondsSinceLastDamage >= 5.0) {
-            cout << "🔄 Регенерация активна! 🔄" << endl;
-        } else {
-            cout << "❌ Регенерация не активна ❌" << endl;
+        cout << "HP: " << health << "/" << maxHealth << endl;
+        cout << "Урон: " << damage << endl;
+        cout << "Ходов без урона: " << turnsWithoutDamage << endl;
+
+        if (turnsWithoutDamage >= 2) {
+            cout << "Регенерация активна!" << endl;
         }
-        
-        cout << "🛡️ Статус блока: " << (hasBlocked ? "Первый удар заблокирован" : "Готов наносить урон") << endl;
+        else {
+            cout << "Регенерация не активна" << endl;
+        }
+
+        cout << "Статус блока: " << (hasBlocked ? "Первый удар заблокирован" : "Готов наносить урон") << endl;
         cout << "===================\n";
     }
+
+    // Геттер для проверки статуса блока (если нужно)
+    bool HasBlocked() const { return hasBlocked; }
+
+    // Сброс пассивки (если нужно вызвать извне)
+    void ResetBlockPassive() {
+        hasBlocked = false;
+        cout << "Пассивка сброшена! Следующая атака снова будет заблокирована.\n";
+    }
 };
+
+class Zombie : public Character {
+private:
+    int turnsWithoutDamage;     // Счётчик ходов без получения урона
+
+public:
+    Zombie(string name)
+        : Character(name, "Darkness", 100, 12, 0) {
+        turnsWithoutDamage = 0;
+    }
+
+    // Пассивка: Регенерация каждый ход если не получал урон
+    void Regeneration() {
+        if (turnsWithoutDamage >= 1 && health < maxHealth) {
+            int healAmount = 10;
+
+            int newHealth = health + healAmount;
+            if (newHealth > maxHealth) {
+                health = maxHealth;
+            }
+            else {
+                health = newHealth;
+            }
+            cout << name << " регенерирует! +" << healAmount << " HP\n";
+            cout << "Здоровье: " << health << "/" << maxHealth << "\n";
+        }
+    }
+
+    void TakeDamage(int amount) override {
+        turnsWithoutDamage = 0;
+        Character::TakeDamage(amount);
+    }
+
+    void Attack(Character& target) override {
+        cout << name << " атакует!\n";
+        target.TakeDamage(damage);
+    }
+
+    void EndOfTurn() {
+        turnsWithoutDamage++;
+        Regeneration();
+    }
+
+    void ShowStats() override {
+        cout << "\n===== ZOMBIE =====" << endl;
+        cout << "Имя: " << name << endl;
+        cout << "Стихия: " << element << endl;
+        cout << "HP: " << health << "/" << maxHealth << endl;
+        cout << "Урон: " << damage << endl;
+        cout << "Ходов без урона: " << turnsWithoutDamage << endl;
+        cout << "==================\n";
+    }
+};
+
+class Ghost : public Character {
+private:
+    bool isEthereal;            // Эфирная форма активна
+    int turnsUntilPhaseShift;    // Ходов до следующего фазового сдвига
+    int etherealTurnsLeft;       // Сколько ходов осталось в эфирной форме
+
+public:
+    Ghost(string name)
+        : Character(name, "Wind", 70, 14, 0) {
+        isEthereal = false;
+        turnsUntilPhaseShift = 3;
+        etherealTurnsLeft = 0;
+    }
+
+    // Пассивка: Фазовый сдвиг каждые 3 хода
+    void PhaseShift() {
+        if (turnsUntilPhaseShift <= 0 && !isEthereal) {
+            isEthereal = true;
+            etherealTurnsLeft = 1;  // Действует 1 ход
+            cout << name << " входит в эфирную форму! Уклонение от следующих "
+                << etherealTurnsLeft << " атак!\n";
+            turnsUntilPhaseShift = 3;  // Сброс счётчика
+        }
+    }
+
+    void TakeDamage(int amount) override {
+        if (isEthereal && etherealTurnsLeft > 0) {
+            cout << name << " уклоняется в эфирной форме!\n";
+            etherealTurnsLeft--;
+            if (etherealTurnsLeft == 0) {
+                isEthereal = false;
+                cout << name << " выходит из эфирной формы.\n";
+            }
+            return;
+        }
+        Character::TakeDamage(amount);
+    }
+
+    void Attack(Character& target) override {
+        cout << name << " атакует!\n";
+        target.TakeDamage(damage);
+    }
+
+    void EndOfTurn() {
+        if (!isEthereal) {
+            turnsUntilPhaseShift--;
+            PhaseShift();
+        }
+        else {
+            etherealTurnsLeft--;
+            if (etherealTurnsLeft == 0) {
+                isEthereal = false;
+                cout << name << " выходит из эфирной формы.\n";
+            }
+        }
+    }
+
+    void ShowStats() override {
+        cout << "\n===== GHOST =====" << endl;
+        cout << "Имя: " << name << endl;
+        cout << "Стихия: " << element << endl;
+        cout << "HP: " << health << "/" << maxHealth << endl;
+        cout << "Урон: " << damage << endl;
+        cout << "Эфирная форма: " << (isEthereal ? "Активна" : "Не активна");
+        if (isEthereal) {
+            cout << " (осталось уклонений: " << etherealTurnsLeft << ")";
+        }
+        cout << endl;
+        cout << "Ходов до фазового сдвига: " << turnsUntilPhaseShift << endl;
+        cout << "================\n";
+    }
+};
+
+int main() {
+    setlocale(LC_ALL, "RU");
+    srand(time(nullptr));
+
+    return 0;
+}
