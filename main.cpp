@@ -713,10 +713,313 @@ public:
         cout << "================\n";
     }
 };
+// Класс для боя с выбором действия
+class BattleSystem {
+private:
+    Character* party[3];
+    Character* enemies[3];
+    int currentTurn;
+    Mage* magePtr;
+
+public:
+    BattleSystem(Character* p1, Character* p2, Character* p3, Character* e1, Character* e2, Character* e3, Mage* mage) {
+        party[0] = p1;
+        party[1] = p2;
+        party[2] = p3;
+        enemies[0] = e1;
+        enemies[1] = e2;
+        enemies[2] = e3;
+        currentTurn = 0;
+        magePtr = mage;
+    }
+    // Функция боя
+    void StartBattle() {
+        bool battleActive = true;
+
+        cout << "=====================================\n";
+        cout << "       ДОБРО ПОЖАЛОВАТЬ В БИТВУ!\n";
+        cout << "=====================================\n";
+        cout << "Ваша команда: Маг, Воин и Ниндзя\n";
+        cout << "Противники: Скелет, Зомби и Призрак\n";
+        cout << "=====================================\n";
+
+        while (battleActive) {
+            cout << "\n========== ХОД " << currentTurn + 1 << " ==========\n";
+
+            cout << "\n--- ХОД ИГРОКА ---\n";
+            // Цикл для хода героев
+            for (int i = 0; i < 3; i++) {
+                if (!party[i]->GetIsAlive()) continue;
+
+                cout << "\nСейчас ходит: " << party[i]->GetName() << endl;
+                cout << "HP: " << party[i]->GetHealth() << "/" << party[i]->GetMaxHealth();
+
+                if (dynamic_cast<Mage*>(party[i])) {
+                    cout << " | Мана: " << party[i]->GetMana();
+                }
+                else if (dynamic_cast<Warrior*>(party[i])) {
+                    cout << " | Ярость: " << dynamic_cast<Warrior*>(party[i])->GetRage();
+                }
+                else if (dynamic_cast<Ninja*>(party[i])) {
+                    cout << " | Мана: " << party[i]->GetMana();
+                }
+                cout << endl;
+
+                bool turnEnded = false;
+                while (!turnEnded) {
+                    cout << "\n1 - Атаковать\n";
+                    cout << "2 - Использовать способность\n";
+                    cout << "3 - Пропустить ход\n";
+                    cout << "Выберите действие: ";
+
+                    int choice;
+                    cin >> choice;
+
+                    if (choice == 1) {
+                        cout << "\nВыберите цель:\n";
+                        int targetIndex = 1;
+                        for (int j = 0; j < 3; j++) {
+                            if (enemies[j]->GetIsAlive()) {
+                                cout << targetIndex << " - " << enemies[j]->GetName()
+                                    << " (HP: " << enemies[j]->GetHealth() << ")\n";
+                                targetIndex++;
+                            }
+                        }
+
+                        int targetChoice;
+                        cin >> targetChoice;
+
+                        int aliveCount = 0;
+                        for (int j = 0; j < 3; j++) {
+                            if (enemies[j]->GetIsAlive()) {
+                                aliveCount++;
+                                if (aliveCount == targetChoice) {
+                                    party[i]->Attack(*enemies[j]);
+                                    break;
+                                }
+                            }
+                        }
+                        turnEnded = true;
+                    }
+                    else if (choice == 2) {
+                        if (dynamic_cast<Mage*>(party[i])) {
+                            Mage* m = dynamic_cast<Mage*>(party[i]);
+                            cout << "\n1 - Огненный шар (30 маны)\n";
+                            cout << "2 - Отравление (25 маны)\n";
+                            cout << "3 - Магический щит (20 маны)\n";
+                            cout << "4 - Быстрое лечение (35 маны)\n";
+                            cout << "0 - Назад\nВыберите: ";
+
+                            int ability;
+                            cin >> ability;
+
+                            if (ability == 1) {
+                                cout << "Выберите цель:\n";
+                                for (int j = 0; j < 3; j++) {
+                                    if (enemies[j]->GetIsAlive()) {
+                                        cout << j + 1 << " - " << enemies[j]->GetName() << "\n";
+                                    }
+                                }
+                                int t; cin >> t;
+                                if (t >= 1 && t <= 3 && enemies[t - 1]->GetIsAlive()) {
+                                    m->Fireball(*enemies[t - 1]);
+                                    turnEnded = true;
+                                }
+                            }
+                            else if (ability == 2) {
+                                cout << "Выберите цель:\n";
+                                for (int j = 0; j < 3; j++) {
+                                    if (enemies[j]->GetIsAlive()) {
+                                        cout << j + 1 << " - " << enemies[j]->GetName() << "\n";
+                                    }
+                                }
+                                int t; cin >> t;
+                                if (t >= 1 && t <= 3 && enemies[t - 1]->GetIsAlive()) {
+                                    m->Poison(*enemies[t - 1]);
+                                    turnEnded = true;
+                                }
+                            }
+                            else if (ability == 3) {
+                                m->Shield();
+                                turnEnded = true;
+                            }
+                            else if (ability == 4) {
+                                m->FastHeal();
+                                turnEnded = true;
+                            }
+                        }
+                        else if (dynamic_cast<Warrior*>(party[i])) {
+                            Warrior* w = dynamic_cast<Warrior*>(party[i]);
+                            cout << "\n1 - Тяжёлый удар (40 ярости)\n";
+                            cout << "2 - Укрытие за щитом (20 ярости)\n";
+                            cout << "0 - Назад\nВыберите: ";
+
+                            int ability;
+                            cin >> ability;
+
+                            if (ability == 1) {
+                                cout << "Выберите цель:\n";
+                                for (int j = 0; j < 3; j++) {
+                                    if (enemies[j]->GetIsAlive()) {
+                                        cout << j + 1 << " - " << enemies[j]->GetName() << "\n";
+                                    }
+                                }
+                                int t; cin >> t;
+                                if (t >= 1 && t <= 3 && enemies[t - 1]->GetIsAlive()) {
+                                    w->HeavyStrike(*enemies[t - 1]);
+                                    turnEnded = true;
+                                }
+                            }
+                            else if (ability == 2) {
+                                w->Shield();
+                                turnEnded = true;
+                            }
+                        }
+                        else if (dynamic_cast<Ninja*>(party[i])) {
+                            Ninja* n = dynamic_cast<Ninja*>(party[i]);
+                            cout << "\n1 - Скрытный удар (30 маны)\n";
+                            cout << "2 - Дымовая завеса (25 маны)\n";
+                            cout << "3 - Сюрикены (20 маны)\n";
+                            cout << "4 - Быстрое лечение (35 маны)\n";
+                            cout << "0 - Назад\nВыберите: ";
+
+                            int ability;
+                            cin >> ability;
+
+                            if (ability == 1) {
+                                n->StealthStrike();
+                                turnEnded = true;
+                            }
+                            else if (ability == 2) {
+                                n->SmokeScreen();
+                                turnEnded = true;
+                            }
+                            else if (ability == 3) {
+                                cout << "Выберите цель:\n";
+                                for (int j = 0; j < 3; j++) {
+                                    if (enemies[j]->GetIsAlive()) {
+                                        cout << j + 1 << " - " << enemies[j]->GetName() << "\n";
+                                    }
+                                }
+                                int t; cin >> t;
+                                if (t >= 1 && t <= 3 && enemies[t - 1]->GetIsAlive()) {
+                                    n->Shuriken(*enemies[t - 1]);
+                                    turnEnded = true;
+                                }
+                            }
+                            else if (ability == 4) {
+                                n->FastHeal();
+                                turnEnded = true;
+                            }
+                        }
+                    }
+                    else if (choice == 3) {
+                        cout << party[i]->GetName() << " пропускает ход.\n";
+                        turnEnded = true;
+                    }
+                }
+            }
+
+            // Проверка на победу
+            bool enemiesAlive = false;
+            for (int i = 0; i < 3; i++) {
+                if (enemies[i]->GetIsAlive()) {
+                    enemiesAlive = true;
+                    break;
+                }
+            }
+
+            if (!enemiesAlive) {
+                cout << "\n========== ПОБЕДА ==========\n";
+                break;
+            }
+
+            cout << "\n--- ХОД ВРАГОВ ---\n";
+            // Цикл для хода врага
+            for (int i = 0; i < 3; i++) {
+                if (!enemies[i]->GetIsAlive()) continue;
+
+                int aliveParty[3];
+                int aliveCount = 0;
+                for (int j = 0; j < 3; j++) {
+                    if (party[j]->GetIsAlive()) {
+                        aliveParty[aliveCount++] = j;
+                    }
+                }
+
+                if (aliveCount == 0) break;
+
+                int randomIndex = rand() % aliveCount;
+                Character* target = party[aliveParty[randomIndex]];
+
+                cout << endl;
+                enemies[i]->Attack(*target);
+            }
+
+            // Проверка на поражение
+            bool partyAlive = false;
+            for (int i = 0; i < 3; i++) {
+                if (party[i]->GetIsAlive()) {
+                    partyAlive = true;
+                    break;
+                }
+            }
+
+            if (!partyAlive) {
+                cout << "\n========== ПОРАЖЕНИЕ ==========\n";
+                break;
+            }
+
+            // Обновление пассивок
+            Skeleton* skeletonPtr = dynamic_cast<Skeleton*>(enemies[0]);
+            Zombie* zombiePtr = dynamic_cast<Zombie*>(enemies[1]);
+            Ghost* ghostPtr = dynamic_cast<Ghost*>(enemies[2]);
+
+            if (skeletonPtr) skeletonPtr->EndOfTurn();
+            if (zombiePtr) zombiePtr->EndOfTurn();
+            if (ghostPtr) ghostPtr->EndOfTurn();
+
+            // Для периодического урона у мага
+            if (magePtr) magePtr->ApplyPoisonDamage();
+
+            // Сброс временных эффектов
+            if (magePtr) magePtr->ResetShield();
+
+            Warrior* warriorPtr = dynamic_cast<Warrior*>(party[1]);
+            if (warriorPtr) warriorPtr->ResetShield();
+
+            Ninja* ninjaPtr = dynamic_cast<Ninja*>(party[2]);
+            if (ninjaPtr) ninjaPtr->ResetInvisible();
+
+            currentTurn++;
+        }
+
+        // Итоговая статистика
+        cout << "\n===== ИТОГОВАЯ СТАТИСТИКА =====\n";
+        for (int i = 0; i < 3; i++) {
+            party[i]->ShowStats();
+        }
+        for (int i = 0; i < 3; i++) {
+            enemies[i]->ShowStats();
+        }
+    }
+};
 
 int main() {
     setlocale(LC_ALL, "RU");
     srand(time(nullptr));
+
+    // Создание персонажей
+    Mage mage("Маг");
+    Warrior warrior("Воин");
+    Ninja ninja("Ниндзя");
+    Skeleton skeleton("Скелет-воин");
+    Zombie zombie("Зомби-мутант");
+    Ghost ghost("Призрачный убийца");
+
+    // Создание и запуск боевой системы
+    BattleSystem battle(&mage, &warrior, &ninja, &skeleton, &zombie, &ghost, &mage);
+    battle.StartBattle();
 
     return 0;
 }
